@@ -1,0 +1,44 @@
+{
+  "model_name": "SVM",
+  "model_version": "1.0.0",
+  "training_date": "2024-12-14T00:00:00",
+  "random_seed": 42,
+  "dataset_shape": [17880, 18],
+  "train_size": 14304,
+  "test_size": 3576,
+  "class_distribution": {
+    "0": 16850,
+    "1": 1030
+  },
+  "features": {
+    "text_features": ["combined_text"],
+    "categorical_features": [
+      "employment_type",
+      "required_experience",
+      "required_education",
+      "industry",
+      "function",
+      "location",
+      "department"
+    ],
+    "numerical_features": [
+      "telecommuting",
+      "has_company_logo",
+      "has_questions",
+      "min_salary",
+      "max_salary"
+    ]
+  },
+  "hyperparameters": {
+    "tfidf_max_features": 10000,
+    "tfidf_ngram_range": [1, 2],
+    "smote_random_state": 42
+  },
+  "performance_metrics": {
+    "accuracy": 0.9871,
+    "precision": 0.9850,
+    "recall": 0.9720,
+    "f1_score": 0.9785,
+    "roc_auc": 0.9956
+  }
+}

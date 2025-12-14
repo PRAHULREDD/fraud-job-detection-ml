@@ -1,0 +1,15 @@
+# ML Backend Dependencies
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn==1.5.2
+imbalanced-learn==0.12.4
+
+# API Server
+fastapi>=0.95.0
+uvicorn[standard]>=0.20.0
+pydantic>=1.10.0
+python-multipart>=0.0.6
+
+# Streamlit UI
+streamlit>=1.28.0
+requests>=2.31.0

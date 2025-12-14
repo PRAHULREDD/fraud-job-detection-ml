@@ -21,27 +21,16 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual Environment (FORCE EXCLUDE)
+# Virtual Environment
 job_model/
-**/job_model/
 venv/
 env/
 ENV/
 .venv/
 .env/
 
-# Python Virtual Environments (ALL PATTERNS)
-*venv*/
-*env*/
-*.venv
-pyvenv.cfg
-Scripts/
-Lib/
-Include/
-
-# Frontend (exclude from repository)
+# Frontend (exclude from repo)
 frontend/
-**/frontend/
 
 # Node.js
 node_modules/

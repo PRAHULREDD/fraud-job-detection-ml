@@ -5,16 +5,12 @@ import pickle
 import pandas as pd
 import uvicorn
 
-app = FastAPI(
-    title="JobSpark AI - Fraud Detection API",
-    description="Production-ready ML API for detecting fraudulent job postings",
-    version="1.0.0"
-)
+app = FastAPI(title="Fake Job Prediction API")
 
-# Allow CORS for any client
+# Allow CORS for the frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,24 +43,6 @@ class JobData(BaseModel):
     telecommuting: str = "0"
     has_company_logo: str = "0"
     has_questions: str = "0"
-
-@app.get("/")
-async def root():
-    """Root endpoint with API information."""
-    return {
-        "message": "JobSpark AI - Fraud Detection API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "health": "/health"
-    }
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "model_loaded": model is not None
-    }
 
 @app.post("/predict")
 async def predict_job(job_data: JobData):

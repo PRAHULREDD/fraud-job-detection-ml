@@ -27,11 +27,14 @@
 
 ## 🎬 Demo
 
-<!-- Add screenshots here after deployment -->
-<!-- ![Streamlit UI](assets/demo-ui.png) -->
-<!-- ![API Docs](assets/api-docs.png) -->
+### Streamlit Web Interface
+![Streamlit UI](assets/streamlit-ui.png)
 
-> **Note**: Add screenshots to `assets/` folder and uncomment above lines
+### Prediction Results
+![Prediction Result](assets/prediction-result.png)
+
+### Analytics Dashboard
+![Analytics Dashboard](assets/analytics-dashboard.png)
 
 ## ✨ Features
 

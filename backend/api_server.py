@@ -10,8 +10,8 @@ app = FastAPI(title="Fake Job Prediction API")
 # Allow CORS for the frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
+    allow_origins=["*"], # Allow all origins for easier deployment, you should restrict this in production
+    allow_credentials=False, # Must be False when allow_origins is '*'
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -20,8 +20,14 @@
 </p>
 
 <p align="center">
-  Built with FastAPI backend and Streamlit frontend for real-time fraud detection.
+  Built with a modern <strong>React (Vite) Frontend</strong> and a robust <strong>FastAPI Backend</strong> for real-time fraud detection.
 </p>
+
+<div align="center">
+  <h3>🌍 Live Demo Links</h3>
+  <p><b>Frontend (Vercel):</b> <a href="https://fraud-job-detection-ml.vercel.app/">https://fraud-job-detection-ml.vercel.app/</a></p>
+  <p><b>Backend API (Render):</b> <a href="https://fraud-job-detection-ml-osbp.onrender.com/docs">https://fraud-job-detection-ml-osbp.onrender.com/docs</a></p>
+</div>
 
 ---
 
@@ -66,19 +72,21 @@ python model_train.py
 
 ⚠️ **Important**: Dataset and trained model are NOT included in this repository. See [DATA_README.md](DATA_README.md) for setup instructions.
 
-### Running the Application
+### Running the Application Locally
 
 ```bash
 # Terminal 1: Start API Server
 cd backend
 python api_server.py
 
-# Terminal 2: Start Streamlit UI
-streamlit run streamlit_app.py
+# Terminal 2: Start React Frontend
+cd frontend
+npm install
+npm run dev
 ```
 
 ### Access Points
-- **Web UI**: http://localhost:8501
+- **Web UI**: http://localhost:5173
 - **API Docs**: http://localhost:8000/docs
 - **API Endpoint**: http://localhost:8000/predict
 
@@ -114,8 +122,9 @@ FakeJobPrediction/
 - Imbalanced-learn - SMOTE sampling
 
 **Frontend**
-- Streamlit - Interactive web UI
-- Requests - API communication
+- React & Vite - Fast development environment
+- Tailwind CSS & Shadcn - Modern UI styling
+- Axios/Fetch - API communication
 
 **ML Pipeline**
 - TF-IDF Vectorization

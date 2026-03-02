@@ -103,7 +103,6 @@ FakeJobPrediction/
 │   ├── ISSUE_TEMPLATE/        # Issue templates
 │   └── pull_request_template.md
 ├── assets/                    # Visual assets
-├── streamlit_app.py           # Streamlit web interface
 ├── requirements.txt           # Python dependencies
 ├── ARCHITECTURE.md            # System architecture
 ├── CONTRIBUTING.md            # Contribution guidelines

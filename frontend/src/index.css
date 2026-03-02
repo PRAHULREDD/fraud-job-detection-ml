@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 220 27% 8%;
+    --foreground: 210 20% 98%;
+
+    --card: 220 25% 11%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 220 27% 9%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 189 94% 55%;
+    --primary-foreground: 220 27% 8%;
+
+    --secondary: 220 20% 16%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 220 20% 14%;
+    --muted-foreground: 210 10% 65%;
+
+    --accent: 189 94% 55%;
+    --accent-foreground: 220 27% 8%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 220 27% 8%;
+
+    --danger: 0 84% 60%;
+    --danger-foreground: 210 20% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 18%;
+    --ring: 189 94% 55%;
+
+    --radius: 0.75rem;
+
+    --glow-primary: 189 94% 55%;
+    --glow-success: 142 76% 45%;
+    --glow-danger: 0 84% 60%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(189 94% 55% / 0.2), hsl(220 27% 8% / 0));
+    --gradient-card: linear-gradient(135deg, hsl(220 25% 13%), hsl(220 25% 10%));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Glass effect utility */
+  .glass {
+    background: hsl(var(--card) / 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.3),
+                0 0 40px hsl(var(--glow-primary) / 0.15);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 20px hsl(var(--glow-success) / 0.4),
+                0 0 40px hsl(var(--glow-success) / 0.2);
+  }
+
+  .glow-danger {
+    box-shadow: 0 0 20px hsl(var(--glow-danger) / 0.4),
+                0 0 40px hsl(var(--glow-danger) / 0.2);
+  }
+
+  /* Animated border gradient */
+  @keyframes border-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animated-border {
+    position: relative;
+  }
+
+  .animated-border::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--success)), hsl(var(--primary)));
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  /* Background parallax shimmer effect */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+    animation: parallax-float 20s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes parallax-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(10px, -10px) scale(1.05); }
+    50% { transform: translate(-10px, 10px) scale(0.95); }
+    75% { transform: translate(-15px, -5px) scale(1.02); }
+  }
+}
+

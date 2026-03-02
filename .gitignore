@@ -30,7 +30,7 @@ ENV/
 .env/
 
 # Frontend (exclude from repo)
-frontend/
+# frontend/
 
 # Node.js
 node_modules/

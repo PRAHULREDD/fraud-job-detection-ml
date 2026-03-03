@@ -75,10 +75,13 @@ export const PredictView = () => {
     
     try {
       const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const API_KEY = import.meta.env.VITE_API_SECRET_KEY || 'your-default-dev-key';
+      
       const response = await fetch(`${API_URL}/predict`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-API-Key': API_KEY,
         },
         body: JSON.stringify(formData),
       });

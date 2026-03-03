@@ -1,17 +1,39 @@
-from fastapi import FastAPI, HTTPException
+import os
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel
 import pickle
 import pandas as pd
 import uvicorn
 
-app = FastAPI(title="Fake Job Prediction API")
+limiter = Limiter(key_func=get_remote_address)
 
-# Allow CORS for the frontend
+app = FastAPI(title="Fake Job Prediction API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Security: API Key setup
+API_KEY = os.getenv("API_KEY", "your-default-dev-key")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
+
+async def get_api_key(api_key: str = Depends(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Could not validate API Key")
+    return api_key
+
+# Allow CORS only from Vercel & Localhost
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all origins for easier deployment, you should restrict this in production
-    allow_credentials=False, # Must be False when allow_origins is '*'
+    allow_origins=[
+        "https://fraud-job-detection-ml.vercel.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -45,7 +67,8 @@ class JobData(BaseModel):
     has_questions: str = "0"
 
 @app.post("/predict")
-async def predict_job(job_data: JobData):
+@limiter.limit("20/minute") # Protect against spam
+async def predict_job(request: Request, job_data: JobData, api_key: str = Depends(get_api_key)):
     if model is None:
         raise HTTPException(status_code=500, detail="Model not loaded. Please check server logs.")
 

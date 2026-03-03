@@ -92,17 +92,17 @@ All colors MUST be HSL.
   /* Glow effects */
   .glow-primary {
     box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.3),
-                0 0 40px hsl(var(--glow-primary) / 0.15);
+      0 0 40px hsl(var(--glow-primary) / 0.15);
   }
 
   .glow-success {
     box-shadow: 0 0 20px hsl(var(--glow-success) / 0.4),
-                0 0 40px hsl(var(--glow-success) / 0.2);
+      0 0 40px hsl(var(--glow-success) / 0.2);
   }
 
   .glow-danger {
     box-shadow: 0 0 20px hsl(var(--glow-danger) / 0.4),
-                0 0 40px hsl(var(--glow-danger) / 0.2);
+      0 0 40px hsl(var(--glow-danger) / 0.2);
   }
 
   /* Animated border gradient */
@@ -110,6 +110,7 @@ All colors MUST be HSL.
     0% {
       transform: rotate(0deg);
     }
+
     100% {
       transform: rotate(360deg);
     }
@@ -129,14 +130,18 @@ All colors MUST be HSL.
     background-size: 200% 200%;
     animation: gradient-shift 3s ease infinite;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
   }
 
   @keyframes gradient-shift {
-    0%, 100% {
+
+    0%,
+    100% {
       background-position: 0% 50%;
     }
+
     50% {
       background-position: 100% 50%;
     }
@@ -157,10 +162,44 @@ All colors MUST be HSL.
   }
 
   @keyframes parallax-float {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    25% { transform: translate(10px, -10px) scale(1.05); }
-    50% { transform: translate(-10px, 10px) scale(0.95); }
-    75% { transform: translate(-15px, -5px) scale(1.02); }
+
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+
+    25% {
+      transform: translate(10px, -10px) scale(1.05);
+    }
+
+    50% {
+      transform: translate(-10px, 10px) scale(0.95);
+    }
+
+    75% {
+      transform: translate(-15px, -5px) scale(1.02);
+    }
+  }
+
+  @keyframes shake {
+
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+
+    20%,
+    60% {
+      transform: translateX(-5px);
+    }
+
+    40%,
+    80% {
+      transform: translateX(5px);
+    }
+  }
+
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
   }
 }
-

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,25 @@ export const PredictView = () => {
   } | null>(null);
   const [formData, setFormData] = useState(initialFormData);
 
+  const loadingMessages = [
+    "Initializing NLP Engine...",
+    "Scanning Semantic Footprint...",
+    "Consulting AI Classifier...",
+    "Calculating Fraud Risk Score...",
+    "Finalizing Threat Assessment...",
+  ];
+  const [loadingText, setLoadingText] = useState(loadingMessages[0]);
+
+  useEffect(() => {
+    if (!isLoading) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % loadingMessages.length;
+      setLoadingText(loadingMessages[i]);
+    }, 800);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -68,15 +87,15 @@ export const PredictView = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       const API_KEY = import.meta.env.VITE_API_SECRET_KEY || 'your-default-dev-key';
-      
+
       const response = await fetch(`${API_URL}/predict`, {
         method: 'POST',
         headers: {
@@ -85,18 +104,18 @@ export const PredictView = () => {
         },
         body: JSON.stringify(formData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
       }
-      
+
       const predictionResult = await response.json();
-      
+
       addPrediction(predictionResult);
       setPrediction(predictionResult);
       setShowResult(true);
-      
+
       toast.success("Prediction completed successfully!");
     } catch (error) {
       console.error('Prediction error:', error);
@@ -225,9 +244,12 @@ export const PredictView = () => {
               <RotateCcw className="w-5 h-5 mr-2" />
               Clear All
             </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1 h-12 text-lg font-semibold glow-primary">
+            <Button type="submit" disabled={isLoading} className="flex-1 h-12 text-lg font-semibold glow-primary relative overflow-hidden">
               {isLoading ? (
-                <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Analyzing...</>
+                <div className="flex items-center space-x-2 animate-pulse">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="font-mono text-sm tracking-tight">{loadingText}</span>
+                </div>
               ) : (
                 <><Sparkles className="w-5 h-5 mr-2" /> Predict Authenticity</>
               )}

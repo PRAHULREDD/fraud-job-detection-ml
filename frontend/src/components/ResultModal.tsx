@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { ShieldCheck, ShieldAlert, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import confetti from "canvas-confetti";
 
 interface ResultModalProps {
   isOpen: boolean;
@@ -17,15 +19,45 @@ export const ResultModal = ({ isOpen, onClose, prediction }: ResultModalProps) =
   const suspicionLevel = prediction.isFake ? prediction.probability * 100 : (1 - prediction.probability) * 100;
   const roundedProbability = Math.round(prediction.probability * 100);
 
+  useEffect(() => {
+    if (isOpen && !prediction.isFake) {
+      // Fire confetti when a legitimate job is detected
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#06b6d4', '#22c55e']
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#06b6d4', '#22c55e']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [isOpen, prediction.isFake]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`max-w-md ${prediction.isFake ? 'glow-danger' : 'glow-success'} border-2 animate-scale-in`}>
+      <DialogContent className={`max-w-md ${prediction.isFake ? 'glow-danger animate-shake border-danger/50' : 'glow-success border-success/50'} border-2`}>
         <div className="text-center space-y-6 py-6">
-          <div className="animate-bounce-in">
+          <div className="relative">
             {prediction.isFake ? (
-              <XCircle className="w-20 h-20 mx-auto text-danger animate-glow-pulse" />
+              <ShieldAlert className="w-24 h-24 mx-auto text-danger animate-pulse filter drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
             ) : (
-              <CheckCircle2 className="w-20 h-20 mx-auto text-success animate-glow-pulse" />
+              <ShieldCheck className="w-24 h-24 mx-auto text-success animate-bounce filter drop-shadow-[0_0_15px_rgba(34,197,94,0.8)]" />
             )}
           </div>
 
@@ -44,7 +76,7 @@ export const ResultModal = ({ isOpen, onClose, prediction }: ResultModalProps) =
               <span className="text-lg font-bold">{roundedProbability}%</span>
             </div>
             <Progress value={roundedProbability} className="h-2" />
-            
+
             <div className="flex items-center justify-between pt-4 border-t border-border">
               <span className="text-sm text-muted-foreground">Fraud Risk Score</span>
               <div className="flex items-center space-x-2">

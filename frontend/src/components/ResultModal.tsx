@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, ShieldAlert, AlertTriangle } from "lucide-react";
+import { ShieldCheck, ShieldAlert, AlertTriangle, Copy } from "lucide-react";
+import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import confetti from "canvas-confetti";
 
@@ -18,6 +19,15 @@ interface ResultModalProps {
 export const ResultModal = ({ isOpen, onClose, prediction }: ResultModalProps) => {
   const suspicionLevel = prediction.isFake ? prediction.probability * 100 : (1 - prediction.probability) * 100;
   const roundedProbability = Math.round(prediction.probability * 100);
+
+  const handleShare = () => {
+    const status = prediction.isFake ? "🚨 Suspicious Job Alert! 🚨" : "✅ Legitimate Job Check ✅";
+    const statusText = prediction.isFake ? "FAKE" : "LEGITIMATE";
+    const text = `${status}\n\nI just scanned a job posting for '${prediction.jobTitle}' and it has a ${roundedProbability}% probability of being ${statusText}.\n\nStay safe out there!`;
+
+    navigator.clipboard.writeText(text);
+    toast.success("Report copied to clipboard!");
+  };
 
   useEffect(() => {
     if (isOpen && !prediction.isFake) {
@@ -107,11 +117,15 @@ export const ResultModal = ({ isOpen, onClose, prediction }: ResultModalProps) =
           )}
 
           <div className="flex space-x-3">
+            <Button variant="outline" onClick={handleShare} className="flex-1 text-primary border-primary/20 hover:bg-primary/10">
+              <Copy className="w-4 h-4 mr-2" />
+              Share Report
+            </Button>
             <Button variant="outline" onClick={onClose} className="flex-1">
               Close
             </Button>
             <Button onClick={onClose} className="flex-1">
-              Predict Another Job
+              Predict Another
             </Button>
           </div>
         </div>

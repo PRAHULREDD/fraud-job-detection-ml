@@ -1,6 +1,10 @@
 import os
+import sys
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.security import APIKeyHeader
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -12,7 +16,29 @@ import uvicorn
 
 limiter = Limiter(key_func=get_remote_address)
 
-app = FastAPI(title="Fake Job Prediction API")
+# Global model variable
+model = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the trained model on startup
+    global model
+    try:
+        with open("saved_model.pkl", "rb") as f:
+            model = pickle.load(f)
+        print("Successfully loaded model: saved_model.pkl")
+    except Exception as e:
+        print(f"CRITICAL ERROR: Failed to load model `saved_model.pkl`. Cause: {e}")
+        # Fail fast: exit completely if the model fails to load
+        sys.exit(1)
+        
+    yield
+    
+    # Cleanup on shutdown (if any)
+    model = None
+
+app = FastAPI(title="Fake Job Prediction API", lifespan=lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -38,16 +64,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load the trained model
-try:
-    with open("saved_model.pkl", "rb") as f:
-        model = pickle.load(f)
-except FileNotFoundError:
-    model = None
-except Exception as e:
-    print(f"Error loading model: {e}")
-    model = None
-
+# Model loading is now handled in the lifespan context manager
 class JobData(BaseModel):
     title: str
     location: str
@@ -62,9 +79,55 @@ class JobData(BaseModel):
     required_education: str = ""
     industry: str
     function: str = ""
-    telecommuting: str = "0"
-    has_company_logo: str = "0"
-    has_questions: str = "0"
+    telecommuting: int = 0
+    has_company_logo: int = 0
+    has_questions: int = 0
+
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint for hosting providers (e.g., Render, Railway).
+    Returns 503 Service Unavailable if the model footprint fails to load.
+    """
+    if model is None:
+        raise HTTPException(status_code=503, detail="Service Unavailable: Model not loaded")
+    return {"status": "ok", "model_loaded": True}
+
+def sync_predict_logic(job_data: JobData, min_salary: float, max_salary: float, loaded_model) -> dict:
+    """Synchronous function to handle heavy CPU-bound pandas and sklearn logic."""
+    data = {
+        "combined_text": " ".join([
+            job_data.title, job_data.company_profile,
+            job_data.description, job_data.requirements,
+            job_data.benefits
+        ]),
+        "employment_type": job_data.employment_type,
+        "required_experience": job_data.required_experience,
+        "required_education": job_data.required_education,
+        "industry": job_data.industry,
+        "function": job_data.function,
+        "location": job_data.location,
+        "department": job_data.department,
+        "telecommuting": job_data.telecommuting,
+        "has_company_logo": job_data.has_company_logo,
+        "has_questions": job_data.has_questions,
+        "min_salary": min_salary,
+        "max_salary": max_salary
+    }
+
+    df = pd.DataFrame([data])
+    df[["telecommuting", "has_company_logo", "has_questions", "min_salary", "max_salary"]] = df[["telecommuting", "has_company_logo", "has_questions", "min_salary", "max_salary"]].astype('float64')
+
+    # Make prediction
+    probabilities = loaded_model.predict_proba(df)[0]
+    is_fake_prob = probabilities[1]
+    is_fake = is_fake_prob > 0.5
+
+    return {
+        "isFake": bool(is_fake),
+        "probability": float(is_fake_prob),
+        "jobTitle": job_data.title
+    }
 
 @app.post("/predict")
 @limiter.limit("20/minute") # Protect against spam
@@ -83,40 +146,9 @@ async def predict_job(request: Request, job_data: JobData, api_key: str = Depend
             except (ValueError, IndexError):
                 pass  # Ignore malformed salary ranges
 
-        # Prepare data for the model
-        data = {
-            "combined_text": " ".join([
-                job_data.title, job_data.company_profile,
-                job_data.description, job_data.requirements,
-                job_data.benefits
-            ]),
-            "employment_type": job_data.employment_type,
-            "required_experience": job_data.required_experience,
-            "required_education": job_data.required_education,
-            "industry": job_data.industry,
-            "function": job_data.function,
-            "location": job_data.location,
-            "department": job_data.department,
-            "telecommuting": int(job_data.telecommuting),
-            "has_company_logo": int(job_data.has_company_logo),
-            "has_questions": int(job_data.has_questions),
-            "min_salary": min_salary,
-            "max_salary": max_salary
-        }
-
-        df = pd.DataFrame([data])
-        df[["telecommuting", "has_company_logo", "has_questions", "min_salary", "max_salary"]] = df[["telecommuting", "has_company_logo", "has_questions", "min_salary", "max_salary"]].astype('float64')
-
-        # Make prediction
-        probabilities = model.predict_proba(df)[0]
-        is_fake_prob = probabilities[1]
-        is_fake = is_fake_prob > 0.5
-
-        return {
-            "isFake": bool(is_fake),
-            "probability": float(is_fake_prob),
-            "jobTitle": job_data.title
-        }
+        # Offload CPU-bound pandas and machine learning logic to a separate thread
+        prediction_result = await run_in_threadpool(sync_predict_logic, job_data, min_salary, max_salary, model)
+        return prediction_result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")

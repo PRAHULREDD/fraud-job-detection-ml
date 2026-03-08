@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LimelightNav, NavItem } from "@/components/ui/limelight-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type TabType = "predict" | "analytics" | "settings";
@@ -20,21 +21,29 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
 
   const navItems = [
     {
+      id: "predict",
       tab: "predict" as TabType,
-      icon: <Sparkles className="w-4 h-4 mr-2" />,
+      icon: <Sparkles className="w-5 h-5 mr-1" />,
       label: "Predict Job",
+      onClick: () => onTabChange("predict" as TabType)
     },
     {
+      id: "analytics",
       tab: "analytics" as TabType,
-      icon: <BarChart3 className="w-4 h-4 mr-2" />,
+      icon: <BarChart3 className="w-5 h-5 mr-1" />,
       label: "Analytics",
+      onClick: () => onTabChange("analytics" as TabType)
     },
     {
+      id: "settings",
       tab: "settings" as TabType,
-      icon: <Settings className="w-4 h-4 mr-2" />,
+      icon: <Settings className="w-5 h-5 mr-1" />,
       label: "Settings",
+      onClick: () => onTabChange("settings" as TabType)
     },
   ];
+
+  const currentTabIndex = navItems.findIndex(i => i.tab === activeTab);
 
   return (
     <nav className="glass sticky top-0 z-40 border-b border-border/50 backdrop-blur-xl">
@@ -71,17 +80,11 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
             </DropdownMenu>
           ) : (
             <div className="flex items-center space-x-2">
-              {navItems.map((item) => (
-                <Button
-                  key={item.tab}
-                  variant={activeTab === item.tab ? "default" : "ghost"}
-                  onClick={() => onTabChange(item.tab)}
-                  className="transition-all duration-300"
-                >
-                  {item.icon}
-                  {item.label}
-                </Button>
-              ))}
+              <LimelightNav
+                items={navItems}
+                defaultActiveIndex={currentTabIndex !== -1 ? currentTabIndex : 0}
+                className="bg-transparent border-0"
+              />
             </div>
           )}
         </div>

@@ -10,8 +10,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Sparkles, RotateCcw } from "lucide-react";
+import { Loader2, Sparkles, RotateCcw, ArrowRight, ArrowLeft, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ResultModal } from "./ResultModal";
 import { usePredictionStore } from "@/hooks/usePredictionStore";
 
@@ -36,14 +48,28 @@ const initialFormData = {
 
 export const PredictView = () => {
   const addPrediction = usePredictionStore((state) => state.addPrediction);
-  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(1);
   const [showResult, setShowResult] = useState(false);
   const [prediction, setPrediction] = useState<{
     isFake: boolean;
     probability: number;
     jobTitle: string;
   } | null>(null);
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(() => {
+    const saved = localStorage.getItem("predictFormData");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return initialFormData;
+      }
+    }
+    return initialFormData;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("predictFormData", JSON.stringify(formData));
+  }, [formData]);
 
   const loadingMessages = [
     "Initializing NLP Engine...",
@@ -54,15 +80,48 @@ export const PredictView = () => {
   ];
   const [loadingText, setLoadingText] = useState(loadingMessages[0]);
 
+  // Network Fetching Logic via React Query
+  const predictMutation = useMutation({
+    mutationFn: async (payload: typeof formData) => {
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const API_KEY = import.meta.env.VITE_API_SECRET_KEY || 'your-default-dev-key';
+
+      const response = await fetch(`${API_URL}/predict`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
+    onSuccess: (predictionResult) => {
+      addPrediction(predictionResult);
+      setPrediction(predictionResult);
+      setShowResult(true);
+      toast.success("Prediction completed successfully!");
+    },
+    onError: (error) => {
+      console.error('Prediction error:', error);
+      toast.error(error.message || 'Failed to get prediction. Ensure the API server is running.');
+    }
+  });
+
   useEffect(() => {
-    if (!isLoading) return;
+    if (!predictMutation.isPending) return;
     let i = 0;
     const interval = setInterval(() => {
       i = (i + 1) % loadingMessages.length;
       setLoadingText(loadingMessages[i]);
     }, 800);
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, [predictMutation.isPending]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -70,6 +129,7 @@ export const PredictView = () => {
 
   const handleClearAll = () => {
     setFormData(initialFormData);
+    localStorage.removeItem("predictFormData");
     toast.info("All fields cleared");
   };
 
@@ -85,44 +145,13 @@ export const PredictView = () => {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-
-    try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const API_KEY = import.meta.env.VITE_API_SECRET_KEY || 'your-default-dev-key';
-
-      const response = await fetch(`${API_URL}/predict`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': API_KEY,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-      }
-
-      const predictionResult = await response.json();
-
-      addPrediction(predictionResult);
-      setPrediction(predictionResult);
-      setShowResult(true);
-
-      toast.success("Prediction completed successfully!");
-    } catch (error) {
-      console.error('Prediction error:', error);
-      toast.error((error as Error).message || 'Failed to get prediction. Ensure the API server is running.');
-    } finally {
-      setIsLoading(false);
-    }
+    // Trigger the mutation
+    predictMutation.mutate(formData);
   };
 
   return (
@@ -240,12 +269,31 @@ export const PredictView = () => {
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={handleClearAll} className="flex-1 h-12 text-lg font-semibold">
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Clear All
-            </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1 h-12 text-lg font-semibold glow-primary relative overflow-hidden">
-              {isLoading ? (
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="outline" className="flex-1 h-12 text-lg font-semibold">
+                  <RotateCcw className="w-5 h-5 mr-2" />
+                  Clear All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="glass border border-white/10 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will wipe out all local storage progression and clear the entire form data simultaneously. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearAll} className="bg-red-500 hover:bg-red-600">
+                    Yes, clear data
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button type="submit" disabled={predictMutation.isPending} className="flex-1 h-12 text-lg font-semibold glow-primary relative overflow-hidden">
+              {predictMutation.isPending ? (
                 <div className="flex items-center space-x-2 animate-pulse">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span className="font-mono text-sm tracking-tight">{loadingText}</span>
